@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import "./App.css";
 
 // Base URL of product-order-service. Override with REACT_APP_API_BASE_URL at build time.
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -10,10 +11,12 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const fetchProducts = useCallback(() => {
+    setLoading(true);
+    setError(null);
     fetch(`${API_BASE_URL}/api/products`)
       .then((res) => {
-        if (!res.ok) throw new Error(`Failed to load products (${res.status})`);
+        if (!res.ok) throw new Error(`Couldn't load products (${res.status})`);
         return res.json();
       })
       .then((data) => {
@@ -26,11 +29,12 @@ function App() {
       });
   }, []);
 
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
   const addToCart = (productId) => {
-    setCart((prev) => ({
-      ...prev,
-      [productId]: (prev[productId] || 0) + 1,
-    }));
+    setCart((prev) => ({ ...prev, [productId]: (prev[productId] || 0) + 1 }));
   };
 
   const removeFromCart = (productId) => {
@@ -54,11 +58,11 @@ function App() {
     }));
 
     if (items.length === 0) {
-      setCheckoutResult({ error: "Your cart is empty." });
+      setCheckoutResult({ status: "FAILED", message: "Your cart is empty. Add something to ring it up." });
       return;
     }
 
-    setCheckoutResult({ loading: true });
+    setCheckoutResult({ pending: true });
 
     fetch(`${API_BASE_URL}/api/checkout`, {
       method: "POST",
@@ -68,74 +72,102 @@ function App() {
       .then(async (res) => {
         const data = await res.json();
         setCheckoutResult(data);
-        if (res.ok) {
-          setCart({});
-        }
+        if (res.ok) setCart({});
       })
       .catch((err) => {
-        setCheckoutResult({ error: err.message });
+        setCheckoutResult({ status: "FAILED", message: err.message });
       });
   };
 
-  if (loading) return <div style={{ padding: "20px" }}>Loading products...</div>;
-  if (error) return <div style={{ padding: "20px", color: "red" }}>Error: {error}</div>;
+  if (loading) {
+    return (
+      <div className="app-shell">
+        <div className="state-message">printing today's price list…</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="app-shell">
+        <div className="state-message state-message--error">
+          {error}
+          <div>
+            <button className="retry-btn" onClick={fetchProducts}>
+              Try again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const resultClass = checkoutResult?.pending
+    ? "result-slip result-slip--pending"
+    : checkoutResult?.status === "SUCCESS"
+    ? "result-slip result-slip--success"
+    : checkoutResult
+    ? "result-slip result-slip--failed"
+    : "";
 
   return (
-    <div style={{ padding: "20px", fontFamily: "sans-serif", maxWidth: "600px", margin: "0 auto" }}>
-      <h1>QuickCart</h1>
-
-      <h2>Products</h2>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {products.map((product) => (
-          <li
-            key={product.id}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginBottom: "8px",
-            }}
-          >
-            <span>
-              {product.name} - ${product.price}
-            </span>
-            <span>
-              {cart[product.id] ? (
-                <>
-                  <button onClick={() => removeFromCart(product.id)}>-</button>
-                  <span style={{ margin: "0 8px" }}>{cart[product.id]}</span>
-                  <button onClick={() => addToCart(product.id)}>+</button>
-                </>
-              ) : (
-                <button onClick={() => addToCart(product.id)}>Add to Cart</button>
-              )}
-            </span>
-          </li>
-        ))}
-      </ul>
-
-      <h2>Cart ({cartItemCount} item{cartItemCount !== 1 ? "s" : ""})</h2>
-      <button onClick={handleCheckout} disabled={cartItemCount === 0}>
-        Checkout
-      </button>
-
-      {checkoutResult && (
-        <div
-          style={{
-            marginTop: "16px",
-            padding: "10px",
-            border: "1px solid #999",
-            background: "#f5f5f5",
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {checkoutResult.loading
-            ? "Processing checkout..."
-            : JSON.stringify(checkoutResult, null, 2)}
+    <div className="app-shell">
+      <div className="receipt">
+        <div className="receipt__header">
+          <h1 className="receipt__store">QuickCart</h1>
+          <p className="receipt__tagline">self-checkout · lane 3</p>
         </div>
-      )}
+
+        <hr className="receipt__rule" />
+
+        <h2 className="receipt__section-title">Today's stock</h2>
+        <ul className="product-list">
+          {products.map((product) => (
+            <li key={product.id} className="product-row">
+              <span className="product-row__name">{product.name}</span>
+              <span className="product-row__leader" />
+              <span className="product-row__price">${product.price}</span>
+              <span className="product-row__controls">
+                {cart[product.id] ? (
+                  <>
+                    <button className="qty-btn" onClick={() => removeFromCart(product.id)} aria-label={`Remove one ${product.name}`}>
+                      −
+                    </button>
+                    <span className="qty-value">{cart[product.id]}</span>
+                    <button className="qty-btn" onClick={() => addToCart(product.id)} aria-label={`Add one more ${product.name}`}>
+                      +
+                    </button>
+                  </>
+                ) : (
+                  <button className="add-btn" onClick={() => addToCart(product.id)}>
+                    Add
+                  </button>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <hr className="receipt__rule" />
+
+        <div className="cart-summary">
+          <span className="cart-summary__count">
+            {cartItemCount} item{cartItemCount !== 1 ? "s" : ""} in cart
+          </span>
+        </div>
+
+        <button className="checkout-btn" onClick={handleCheckout} disabled={cartItemCount === 0}>
+          Checkout
+        </button>
+
+        {checkoutResult && (
+          <div className={resultClass}>
+            {checkoutResult.pending
+              ? "ringing it up…"
+              : JSON.stringify(checkoutResult, null, 2)}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

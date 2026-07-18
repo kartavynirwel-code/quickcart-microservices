@@ -1,4 +1,10 @@
 # ==============================
+# Root-level secrets
+# ==============================
+.env
+!.env.example
+
+# ==============================
 # frontend/ (Node / React)
 # ==============================
 frontend/node_modules/
@@ -33,12 +39,19 @@ payment-service/*.egg-info/
 payment-service/.pytest_cache/
 
 # ==============================
+# Docker
+# ==============================
+*.env.local
+docker-compose.override.yml
+
+# ==============================
 # Editors / IDEs
 # ==============================
 .idea/
 .vscode/
 *.iml
 *.swp
+*.swo
 
 # ==============================
 # OS junk
