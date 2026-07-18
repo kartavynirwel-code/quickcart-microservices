@@ -1,0 +1,59 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: product-order-service
+
+  # --- MySQL connection: externalized via env vars so you can point at local vs k8s MySQL ---
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:quickcart}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      # 'update' lets Hibernate create/adjust tables on startup for local dev.
+      # You already have schema.sql if you'd rather manage DDL manually — switch this to 'none' then.
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    # Ensures data.sql runs AFTER Hibernate creates the tables (since ddl-auto handles schema here).
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+
+# --- payment-service location. Uses the k8s service name by default; override for local runs. ---
+payment:
+  service:
+    base-url: ${PAYMENT_SERVICE_URL:http://payment-service:8000}
+
+# --- Actuator / Prometheus ---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  # --- Tracing (OpenTelemetry via Micrometer bridge) ---
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      # TODO: update this to your actual Tempo/OTel collector endpoint once deployed
+      endpoint: http://tempo.tracing.svc.cluster.local:4318/v1/traces
+
+logging:
+  level:
+    root: INFO

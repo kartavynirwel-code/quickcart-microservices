@@ -1,0 +1,47 @@
+# ==============================
+# frontend/ (Node / React)
+# ==============================
+frontend/node_modules/
+frontend/build/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# ==============================
+# product-order-service/ (Java / Maven)
+# ==============================
+product-order-service/target/
+product-order-service/.env
+product-order-service/*.log
+product-order-service/.mvn/wrapper/maven-wrapper.jar
+
+# ==============================
+# payment-service/ (Python / FastAPI)
+# ==============================
+payment-service/__pycache__/
+payment-service/*.pyc
+payment-service/.venv/
+payment-service/venv/
+payment-service/env/
+payment-service/.env
+payment-service/*.egg-info/
+payment-service/.pytest_cache/
+
+# ==============================
+# Editors / IDEs
+# ==============================
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# ==============================
+# OS junk
+# ==============================
+.DS_Store
+Thumbs.db
