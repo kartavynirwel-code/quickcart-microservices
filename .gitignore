@@ -45,6 +45,22 @@ payment-service/.pytest_cache/
 docker-compose.override.yml
 
 # ==============================
+# Kubernetes
+# ==============================
+# Secret manifest has real passwords in stringData - don't commit as-is.
+# Keep a secret.example.yaml with placeholder values instead.
+k8s/manifests/secrets.yaml
+!k8s/manifests/secret.example.yaml
+
+# Any local kubeconfig accidentally copied into repo
+kubeconfig
+*.kubeconfig
+.kube/
+
+# kind cluster config, if it ever contains local-only paths/ports
+kind-config.local.yaml
+
+# ==============================
 # Editors / IDEs
 # ==============================
 .idea/

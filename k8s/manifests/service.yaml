@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-database-service
+spec:
+  clusterIP: None  
+  selector:
+    app: my-app-database-service 
+  ports:
+    - port: 3306
+      targetPort: 3306
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-payment-service
+spec:
+  selector:
+    app: my-app-payment-service
+  ports:
+    - port: 8000
+      targetPort: 8000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-product-order-service
+spec:
+  selector:
+    app: my-app-product-order-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-frontend-service
+spec:
+  selector:
+    app: myapp-frontend
+  ports:
+    - port: 3000
+      targetPort: 8080
+      nodePort: 30080
+  type: NodePort

@@ -1,0 +1,226 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: my-app-statefulset
+  labels:
+    app: my-app
+spec:
+  serviceName: "my-database-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app-database-service
+  template:
+    metadata:
+      labels:
+        app: my-app-database-service
+    spec:
+      containers:
+      - name: my-app-database-service
+        image: mysql:8.0
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql   
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secrets
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secrets
+              key: MYSQL_DATABASE
+        - name: MYSQL_USER 
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secrets
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secrets
+              key: MYSQL_PASSWORD
+  volumeClaimTemplates:
+      - metadata:
+          name: mysql-data
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-deployment
+  labels:
+    app: my-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-app-product-order-service
+  template:
+    metadata:
+      labels:
+        app: my-app-product-order-service
+    spec:
+      containers:
+      - name: my-app-product-order-service
+        image: quickcart-product-order-service:latest
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "1"
+        ports:
+        - containerPort: 8090
+          nodePort: 30081
+        type: NodePort
+        env:
+        - name: DB_HOST
+          value: "my-app-statefulset-0.my-database-service.default.svc.cluster.local"
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secrets
+              key: MYSQL_DATABASE
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secrets
+              key: MYSQL_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secrets
+              key: MYSQL_PASSWORD
+        - name: PAYMENT_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: my-app-config
+              key: PAYMENT_SERVICE_URL
+        - name: CORS_ALLOWED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: my-app-config
+              key: CORS_ALLOWED_ORIGINS
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-payment-service-deployment
+  labels:
+    app: my-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-app-payment-service
+  template:
+    metadata:
+      labels:
+        app: my-app-payment-service
+    spec:
+      containers:
+      - name: my-app-payment-service
+        image: quickcart-payment-service:latest
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "1"
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DB_HOST
+          value: "my-database-service"
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secrets
+              key: MYSQL_DATABASE
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secrets
+              key: MYSQL_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: my-app-secrets
+              key: MYSQL_PASSWORD
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: my-app-config
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp-frontend
+  template:
+    metadata:
+      labels:
+        app: myapp-frontend
+    spec:
+      containers:
+      - name: myapp-frontend
+        image: quickcart-frontend:latest
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 3000
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: myapp
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: myapp
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+      
