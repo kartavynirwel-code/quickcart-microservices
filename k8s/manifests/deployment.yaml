@@ -87,7 +87,7 @@ spec:
             memory: "64Mi"
             cpu: "250m"
           limits:
-            memory: "128Mi"
+            memory: "256Mi"
             cpu: "1"
         ports:
         - containerPort: 8090
@@ -149,7 +149,7 @@ spec:
             memory: "64Mi"
             cpu: "250m"
           limits:
-            memory: "128Mi"
+            memory: "256Mi"
             cpu: "1"
         ports:
         - containerPort: 8000
@@ -203,7 +203,7 @@ spec:
             memory: "64Mi"
             cpu: "250m"
           limits:
-            memory: "128Mi"
+            memory: "256Mi"
             cpu: "500m"
         ports:
         - containerPort: 3000
