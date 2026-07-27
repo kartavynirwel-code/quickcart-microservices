@@ -87,7 +87,7 @@ spec:
             memory: "64Mi"
             cpu: "250m"
           limits:
-            memory: "256Mi"
+            memory: "1Gi"
             cpu: "1"
         ports:
         - containerPort: 8090
