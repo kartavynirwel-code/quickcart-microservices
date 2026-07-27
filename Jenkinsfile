@@ -26,6 +26,9 @@ pipeline{
         }
         stage('Deploy to Kubernetes'){
             steps{
+                sh'sed -i "s/quickcart-product-order-service:.*/quickcart-product-order-service:${BUILD_NUMBER}/" k8s/manifests/product-order-deployment.yaml'
+                sh'sed -i "s/quickcart-payment-service:.*/quickcart-payment-service:${BUILD_NUMBER}/" k8s/manifests/payment-deployment.yaml'
+                sh'sed -i "s/quickcart-frontend:.*/quickcart-frontend:${BUILD_NUMBER}/" k8s/manifests/frontend-deployment.yaml'
                 sh 'kubectl apply -f k8s/manifests/'
             }
         }
