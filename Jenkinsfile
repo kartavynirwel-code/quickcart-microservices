@@ -26,6 +26,9 @@ pipeline{
         }
         stage('Deploy to Kubernetes'){
             steps{
+                sh 'minikube image load quickcart-product-order-service:latest'
+                sh 'minikube image load quickcart-payment-service:latest'
+                sh 'minikube image load quickcart-frontend:latest'
                 sh 'kubectl apply -f k8s/manifests/'
             }
         }
