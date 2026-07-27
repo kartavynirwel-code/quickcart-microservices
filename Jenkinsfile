@@ -14,13 +14,13 @@ pipeline{
         stage('Docker Build'){
             steps{
                 dir('product-order-service'){
-                    sh 'docker build -t product-order-service:latest .'
+                    sh 'docker build -t quickcart-product-order-service:${BUILD_NUMBER} .'
                 }
                 dir('payment-service'){
-                    sh 'docker build -t payment-service:latest .'
+                    sh 'docker build -t quickcart-payment-service:${BUILD_NUMBER} .'
                 }
                 dir('frontend'){
-                    sh 'docker build --build-arg REACT_APP_API_BASE_URL=${API_BASE_URL} -t frontend:latest .'
+                    sh 'docker build --build-arg REACT_APP_API_BASE_URL=${API_BASE_URL} -t quickcart-frontend:${BUILD_NUMBER} .'
                 }
             }
         }
