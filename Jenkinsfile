@@ -2,7 +2,7 @@ pipeline{
     agent any
 
     environment {
-        API_BASE_URL = 'http://localhost:30081'
+    API_BASE_URL = 'http://15.207.114.7:30081'
     }
 
     stages{
