@@ -5,4 +5,4 @@ metadata:
 data:
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://my-app-otel-collector:4317"
   PAYMENT_SERVICE_URL: "http://my-app-payment-service:8000"
-  CORS_ALLOWED_ORIGINS: "http://localhost:3000"
+  CORS_ALLOWED_ORIGINS: "http://15.207.114.7:30080"
