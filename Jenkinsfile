@@ -14,21 +14,18 @@ pipeline{
         stage('Docker Build'){
             steps{
                 dir('product-order-service'){
-                    sh 'docker build -t quickcart-product-order-service:${BUILD_NUMBER} .'
+                    sh 'docker build -t quickcart-product-order-service:latest .'
                 }
                 dir('payment-service'){
-                    sh 'docker build -t quickcart-payment-service:${BUILD_NUMBER} .'
+                    sh 'docker build -t quickcart-payment-service:latest .'
                 }
                 dir('frontend'){
-                    sh 'docker build --build-arg REACT_APP_API_BASE_URL=${API_BASE_URL} -t quickcart-frontend:${BUILD_NUMBER} .'
+                    sh 'docker build --build-arg REACT_APP_API_BASE_URL=${API_BASE_URL} -t quickcart-frontend:latest .'
                 }
             }
         }
         stage('Deploy to Kubernetes'){
             steps{
-                sh'sed -i "s/quickcart-product-order-service:.*/quickcart-product-order-service:${BUILD_NUMBER}/" k8s/manifests/product-order-deployment.yaml'
-                sh'sed -i "s/quickcart-payment-service:.*/quickcart-payment-service:${BUILD_NUMBER}/" k8s/manifests/payment-deployment.yaml'
-                sh'sed -i "s/quickcart-frontend:.*/quickcart-frontend:${BUILD_NUMBER}/" k8s/manifests/frontend-deployment.yaml'
                 sh 'kubectl apply -f k8s/manifests/'
             }
         }
